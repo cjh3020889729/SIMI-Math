@@ -1,8 +1,11 @@
 # (个人)数值分析作业库
 
 > Date: 2022/10/12
+
 > Update: 2022/10/16
+
 > author: Jinghui Cai
+
 
 - Tensor: 目前支持2d
 - Algorithm: 
