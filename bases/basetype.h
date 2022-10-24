@@ -161,6 +161,18 @@ public:
     bool operator>=(const Float64& right_value) const { return _data>=right_value.data(); }
     bool operator<=(const Float64& right_value) const { return _data<=right_value.data(); }
 
+    operator Float32();
+    operator Float64();
+    operator Int8();
+    operator Int16();
+    operator Int32();
+    operator Int64();
+    operator Uint8();
+    operator Uint16();
+    operator Uint32();
+    operator Uint64();
+    operator Bool();
+
     // 输出重载符: <<
     friend std::ostream& operator<<(std::ostream& out, const Float64& value);
 };

@@ -115,6 +115,30 @@ Float64::Float64(const Bool& value)
 {
     _data = value.data();
 }
+Float64::operator Float32()
+{ return Float32(_data); }
+Float64::operator Float64()
+{ return Float64(_data); }
+Float64::operator Int8()
+{ return Int8(_data); }
+Float64::operator Int16()
+{ return Int16(_data); }
+Float64::operator Int32()
+{ return Int32(_data); }
+Float64::operator Int64()
+{ return Int64(_data); }
+Float64::operator Uint8()
+{ return Uint8(_data); }
+Float64::operator Uint16()
+{ return Uint16(_data); }
+Float64::operator Uint32()
+{ return Uint32(_data); }
+Float64::operator Uint64()
+{ return Uint64(_data); }
+Float64::operator Bool()
+{ return Bool(_data); }
+
+
 
 /* Class Int8
 * 

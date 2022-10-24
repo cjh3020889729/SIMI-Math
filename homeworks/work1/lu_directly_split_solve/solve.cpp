@@ -9,7 +9,7 @@
 
 void lu_solve()
 {
-    std::cout << "gaussian_elimination work(A_3x3, b_3x1):" << std::endl;
+    std::cout << "LU solve work(A_3x3, b_3x1):" << std::endl;
 
     SIMI::Tensor<SIMI::Float64> a_tensor(3, 3);
     std::cout << "Shape: " << a_tensor.get_shape() << std::endl;
