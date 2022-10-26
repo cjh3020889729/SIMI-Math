@@ -16,6 +16,8 @@ void test_gausi_solve();
 void test_lu_split();
 void test_jacobi_matrix_split();
 void test_to_strict_diagonal_dominance_matrix();
+void test_matrix_inverse();
+void test_jacobi_iterator_solve();
 void test_hilbert_generate();
 
 
@@ -48,7 +50,11 @@ int main()
     // jacobi矩阵分解
     // test_jacobi_matrix_split();
     // 严格对角占优矩阵转换
-    test_to_strict_diagonal_dominance_matrix();
+    // test_to_strict_diagonal_dominance_matrix();
+    // 矩阵的逆
+    // test_matrix_inverse();
+    // jacobi迭代求解
+    test_jacobi_iterator_solve();
 
 
 
@@ -289,6 +295,94 @@ void test_to_strict_diagonal_dominance_matrix()
     }
 
     std::cout << "Strict Diagonal Dominance Tensor:" << strict_diagonal_dominance_tensor << std::endl;
+}
+
+void test_matrix_inverse()
+{
+    std::cout << "Matrix Inverse(2x2) test:" << std::endl;
+
+    SIMI::Tensor<SIMI::Float64> input_tensor1(2, 2);
+    SIMI::Tensor<SIMI::Float64> input_tensor1_inverse(2, 2);
+    input_tensor1.iloc(0, 0) = 1;
+    input_tensor1.iloc(0, 1) = 3;
+    input_tensor1.iloc(1, 0) = 4;
+    input_tensor1.iloc(1, 1) = 13;
+    input_tensor1_inverse.zeros();
+    std::cout << "Input Tensor:" << input_tensor1 << std::endl;
+
+    std::cout << "Matrix Inverse(2x2):" << std::endl;
+    if(!(SIMI::MATRIX::inverse(input_tensor1, input_tensor1_inverse).tobool())) {
+            return;
+    }
+    std::cout << input_tensor1_inverse;
+}
+
+void test_jacobi_iterator_solve()
+{
+    std::cout << "Jacobi Iterator Solve(3, 3) test:" << std::endl;
+
+    SIMI::reset_float_show_precision(10);
+
+    SIMI::Tensor<SIMI::Float64> tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> x(3, 1);
+    SIMI::Tensor<SIMI::Float64> b(3, 1);
+    SIMI::Tensor<SIMI::Float64> strict_diagonal_dominance_tensor(3, 3);
+    tensor.iloc(0, 0) = 1;
+    tensor.iloc(0, 1) = -8;
+    tensor.iloc(0, 2) = -2;
+    tensor.iloc(1, 0) = 1;
+    tensor.iloc(1, 1) = 1;
+    tensor.iloc(1, 2) = 5;
+    tensor.iloc(2, 0) = 3;
+    tensor.iloc(2, 1) = -1;
+    tensor.iloc(2, 2) = 1;
+    b.iloc(0, 0) = 1;
+    b.iloc(1, 0) = 4;
+    b.iloc(2, 0) = -2;
+    strict_diagonal_dominance_tensor.zeros();
+    std::cout << "Input Tensor:\n" << tensor << std::endl;
+    std::cout << "Input x:\n" << x << std::endl;
+    std::cout << "Input b:\n" << b << std::endl;
+
+    std::cout << "To Strict Diagonal Dominance Matrix(3, 3):" << std::endl;
+    if(!SIMI::MATRIX::to_strict_diagonal_dominance_matrix<SIMI::Float64>(
+        tensor,
+        b,
+        strict_diagonal_dominance_tensor).tobool()) {
+            return;
+    }
+    std::cout << strict_diagonal_dominance_tensor;
+    std::cout << "b:\n" << b << std::endl;
+
+    SIMI::Tensor<SIMI::Float64> d_tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> l_tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> u_tensor(3, 3);
+    std::cout << "Jacobi_Matrix_Split(3, 3):" << std::endl;
+    SIMI::MATRIX::jacobi_iterator_matrix_split<SIMI::Float64>(
+        strict_diagonal_dominance_tensor,
+        d_tensor,
+        l_tensor,
+        u_tensor
+    );
+    std::cout << "D Tensor:\n" << d_tensor << std::endl;
+    std::cout << "L Tensor:\n" << l_tensor << std::endl;
+    std::cout << "U Tensor:\n" << u_tensor << std::endl;
+
+    SIMI::float64 error_limit = 1e-8;
+    SIMI::u32 max_iters = 30;
+    std::cout << "Jacobi Iterator Solve(3, 3):" << std::endl;
+    SIMI::SOLVES::jacobi_iterator_solve(
+        d_tensor,
+        l_tensor,
+        u_tensor,
+        x,
+        b,
+        error_limit,
+        max_iters,
+        true
+    );
+    std::cout << "Iterator Solve Result:\n" << x;
+
 }
 
 void test_hilbert_generate()

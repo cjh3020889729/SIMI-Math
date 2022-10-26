@@ -166,8 +166,8 @@ __ALGORITHM__ Tensor<DEFINE_TYPE1> to_upper_triangular_matrix(const Tensor<DEFIN
     u32 _rows = _temp.get_shape()[0].touint32();
     u32 _cols = _temp.get_shape()[1].touint32();
     for(int _iter_count = 0; _iter_count < (_cols-1); _iter_count++) {
-        u32 _max_at_row = _iter_count + UTILS::argmax_1d(get_col(_temp, (u32)_iter_count), _iter_count); // 列最大值所在行
-
+        // UTILS::matrix_abs : maybe need to choice the abs max_index
+        u32 _max_at_row = _iter_count + UTILS::argmax_1d(UTILS::matrix_abs(get_col(_temp, (u32)_iter_count)), _iter_count); // 列最大值所在行
         if(_max_at_row != _iter_count) exchange_row(_temp, _iter_count, _max_at_row); // 交换最大列所在行
         
         for(int i = _iter_count+1; i < _rows; i++) {

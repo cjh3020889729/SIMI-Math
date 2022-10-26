@@ -13,7 +13,7 @@ namespace SIMI {
 
 namespace UTILS {
 
-#define CHECK_ZERO(tensor_elemment) (abs(tensor_elemment) == 0)
+#define CHECK_ZERO(tensor_elemment) (fabs(tensor_elemment) < LIMIT_FLOAT64_ZERO)
 #define CHECK_FLOAT32_ELEM_ZERO(tensor_elemment) (fabs(tensor_elemment.tofloat32()) < LIMIT_FLOAT32_ZERO)
 #define CHECK_FLOAT64_ELEM_ZERO(tensor_elemment) (fabs(tensor_elemment.tofloat64()) < LIMIT_FLOAT64_ZERO)
 
@@ -21,6 +21,12 @@ typedef enum {
     NORMAL=1,
     QUICK_SORT
 } SORT_MODE;
+
+// 类型萃取: eg: TensorType_Traits<one_tensor>::type new_tensor;
+template<class T>
+struct TensorType_Traits {
+    using type = T;
+};
 
 // 矩阵/向量求和
 template<class T>
