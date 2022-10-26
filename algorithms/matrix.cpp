@@ -115,20 +115,20 @@ __ALGORITHM__ Tensor<DEFINE_TYPE1> multiply(const Tensor<DEFINE_TYPE1>& tensor1,
 template<>
 __ALGORITHM__ Tensor<DEFINE_TYPE1> get_col(const Tensor<DEFINE_TYPE1>& tensor, u32 col)
 {
-    Tensor<DEFINE_TYPE1> _temp(tensor.get_shape()[1].touint32());
+    Tensor<DEFINE_TYPE1> _temp(tensor.get_shape()[0].touint32());
 
-    for(int i = 0; i < tensor.get_shape()[1].toint32(); i++) {
-        _temp.iloc(i) = tensor.at(col, i);
+    for(int i = 0; i < tensor.get_shape()[0].toint32(); i++) {
+        _temp.iloc(i) = tensor.at(i, col);
     }
     return _temp;
 }
 template<>
 __ALGORITHM__ Tensor<DEFINE_TYPE1> get_row(const Tensor<DEFINE_TYPE1>& tensor, u32 row)
 {
-    Tensor<DEFINE_TYPE1> _temp(tensor.get_shape()[0].touint32());
+    Tensor<DEFINE_TYPE1> _temp(tensor.get_shape()[1].touint32());
 
-    for(int i = 0; i < tensor.get_shape()[0].toint32(); i++) {
-        _temp.iloc(i) = tensor.at(i, row);
+    for(int i = 0; i < tensor.get_shape()[1].toint32(); i++) {
+        _temp.iloc(i) = tensor.at(row, i);
     }
     return _temp;
 }
@@ -139,9 +139,9 @@ __ALGORITHM__ void exchange_col(Tensor<DEFINE_TYPE1>& tensor, u32 col1, u32 col2
 {
     Tensor<DEFINE_TYPE1> _temp(tensor);
 
-    for(int i = 0; i < _temp.get_shape()[1].toint32(); i++) {
-        _temp.iloc(col1, i) = tensor.at(col2, i);
-        _temp.iloc(col2, i) = tensor.at(col1, i);
+    for(int i = 0; i < _temp.get_shape()[0].toint32(); i++) {
+        _temp.iloc(i, col1) = tensor.at(i, col2);
+        _temp.iloc(i, col2) = tensor.at(i, col1);
     }
     tensor = _temp;
 }
@@ -151,9 +151,9 @@ __ALGORITHM__ void exchange_row(Tensor<DEFINE_TYPE1>& tensor, u32 row1, u32 row2
 {
     Tensor<DEFINE_TYPE1> _temp(tensor);
 
-    for(int i = 0; i < _temp.get_shape()[0].toint32(); i++) {
-        _temp.iloc(i, row1) = tensor.at(i, row2);
-        _temp.iloc(i, row2) = tensor.at(i, row1);
+    for(int i = 0; i < _temp.get_shape()[1].toint32(); i++) {
+        _temp.iloc(row1, i) = tensor.at(row2, i);
+        _temp.iloc(row2, i) = tensor.at(row1, i);
     }
     tensor = _temp;
 }
@@ -163,18 +163,21 @@ template<>
 __ALGORITHM__ Tensor<DEFINE_TYPE1> to_upper_triangular_matrix(const Tensor<DEFINE_TYPE1>& tensor)
 {
     Tensor<DEFINE_TYPE1> _temp(tensor);
-    u32 _cols = _temp.get_shape()[0].touint32();
-    u32 _rows = _temp.get_shape()[1].touint32();
+    u32 _rows = _temp.get_shape()[0].touint32();
+    u32 _cols = _temp.get_shape()[1].touint32();
     for(int _iter_count = 0; _iter_count < (_cols-1); _iter_count++) {
-        u32 _max_at_col = _iter_count + UTILS::argmax_1d(get_row(_temp, (u32)_iter_count), _iter_count); // 列最大值所在行
-        if(_max_at_col != _iter_count) exchange_col(_temp, _iter_count, _max_at_col); // 交换最大列所在行
-        for(int i = _iter_count+1; i < _cols; i++) {
+        u32 _max_at_row = _iter_count + UTILS::argmax_1d(get_col(_temp, (u32)_iter_count), _iter_count); // 列最大值所在行
+
+        if(_max_at_row != _iter_count) exchange_row(_temp, _iter_count, _max_at_row); // 交换最大列所在行
+        
+        for(int i = _iter_count+1; i < _rows; i++) {
             float64 _ratio = (_temp.at(i, _iter_count) / _temp.at(_iter_count, _iter_count)).tofloat64();
-            for(int j = _iter_count; j < _rows; j++) {
+            for(int j = _iter_count; j < _cols; j++) {
                 _temp.iloc(i, j) = _temp.at(i, j) - (_temp.at(_iter_count, j) * _ratio);
                 if(CHECK_FLOAT64_ELEM_ZERO(_temp.at(i, j))) _temp.iloc(i, j) = 0;
             }
         }
+    
     }
     return _temp;
 }

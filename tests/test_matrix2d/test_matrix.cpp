@@ -14,6 +14,8 @@ void test_multiply();
 void test_to_upper_triangular();
 void test_gausi_solve();
 void test_lu_split();
+void test_jacobi_matrix_split();
+void test_to_strict_diagonal_dominance_matrix();
 void test_hilbert_generate();
 
 
@@ -43,8 +45,16 @@ int main()
     // test_gausi_solve();
     // LU分解验证
     // test_lu_split();
+    // jacobi矩阵分解
+    // test_jacobi_matrix_split();
+    // 严格对角占优矩阵转换
+    test_to_strict_diagonal_dominance_matrix();
+
+
+
+
     // hilbert生成
-    test_hilbert_generate();
+    //test_hilbert_generate();
 
     return 0;
 }
@@ -216,6 +226,71 @@ void test_lu_split()
     std::cout << u_tensor << std::endl;
 }
 
+void test_jacobi_matrix_split()
+{
+    std::cout << "Jacobi_Matrix_Split(3, 3) test:" << std::endl;
+
+    SIMI::Tensor<SIMI::Float64> tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> d_tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> l_tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> u_tensor(3, 3);
+    tensor.iloc(0, 0) = 3;
+    tensor.iloc(0, 1) = -1;
+    tensor.iloc(0, 2) = 1;
+    tensor.iloc(1, 0) = 1;
+    tensor.iloc(1, 1) = -8;
+    tensor.iloc(1, 2) = -2;
+    tensor.iloc(2, 0) = 1;
+    tensor.iloc(2, 1) = 1;
+    tensor.iloc(2, 2) = 5;
+    d_tensor.zeros();
+    l_tensor.zeros();
+    u_tensor.zeros();
+    std::cout << "Input Tensor:" << tensor << std::endl;
+    std::cout << "D Tensor:" << d_tensor << std::endl;
+    std::cout << "L Tensor:" << l_tensor << std::endl;
+    std::cout << "U Tensor:" << u_tensor << std::endl;
+
+    std::cout << "Jacobi_Matrix_Split(3, 3):" << std::endl;
+    SIMI::MATRIX::jacobi_iterator_matrix_split<SIMI::Float64>(
+        tensor,
+        d_tensor,
+        l_tensor,
+        u_tensor
+    );
+    std::cout << "D Tensor:" << d_tensor << std::endl;
+    std::cout << "L Tensor:" << l_tensor << std::endl;
+    std::cout << "U Tensor:" << u_tensor << std::endl;
+}
+
+void test_to_strict_diagonal_dominance_matrix()
+{
+    std::cout << "To Strict Diagonal Dominance Matrix(3, 3) test:" << std::endl;
+
+    SIMI::Tensor<SIMI::Float64> tensor(3, 3);
+    SIMI::Tensor<SIMI::Float64> strict_diagonal_dominance_tensor(3, 3);
+    tensor.iloc(0, 0) = 1;
+    tensor.iloc(0, 1) = -8;
+    tensor.iloc(0, 2) = -2;
+    tensor.iloc(1, 0) = 1;
+    tensor.iloc(1, 1) = 1;
+    tensor.iloc(1, 2) = 5;
+    tensor.iloc(2, 0) = 3;
+    tensor.iloc(2, 1) = -1;
+    tensor.iloc(2, 2) = 1;
+    strict_diagonal_dominance_tensor.zeros();
+    std::cout << "Input Tensor:" << tensor << std::endl;
+
+    std::cout << "To Strict Diagonal Dominance Matrix(3, 3):" << std::endl;
+    if(!SIMI::MATRIX::to_strict_diagonal_dominance_matrix<SIMI::Float64>(
+        tensor,
+        strict_diagonal_dominance_tensor).tobool()) {
+            return;
+    }
+
+    std::cout << "Strict Diagonal Dominance Tensor:" << strict_diagonal_dominance_tensor << std::endl;
+}
+
 void test_hilbert_generate()
 {
     std::cout << "Hilbert_generate[5] test:" << std::endl;
@@ -228,3 +303,5 @@ void test_hilbert_generate()
     tensor = SIMI::MATRIX::hilbert_generate<SIMI::Float64>(12);
     std::cout << tensor << std::endl;
 }
+
+

@@ -22,6 +22,34 @@ typedef enum {
     QUICK_SORT
 } SORT_MODE;
 
+// 矩阵/向量求和
+template<class T>
+__ALGORITHM__ T matrix_sum(const Tensor<T>& tensor)
+{
+    MATRIX_ASSERT_QUIT(tensor.check_elem_number().tobool());
+
+    T _sum;
+    u64 _elem_num = tensor.elem_num().touint64();
+    for(int i = 0; i < _elem_num; i++) {
+        _sum += tensor.data().get()[i];
+    }
+    return _sum;
+}
+
+// 矩阵/向量元素取绝对值
+template<class T>
+__ALGORITHM__ Tensor<T> matrix_abs(const Tensor<T>& tensor)
+{
+    MATRIX_ASSERT_QUIT(tensor.check_elem_number().tobool());
+
+    Tensor<T> _tensor(tensor);
+    u64 _elem_num = _tensor.elem_num().touint64();
+    for(int i = 0; i < _elem_num; i++) {
+        _tensor.data().get()[i] = fabs(_tensor.data().get()[i].tofloat64());
+    }
+    return _tensor;
+}
+
 template<class T>
 u32 argmax_1d(Tensor<T> tensor);
 template<class T>

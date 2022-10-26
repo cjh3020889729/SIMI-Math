@@ -21,6 +21,19 @@ __DATA__ typedef enum {
     COPPERSMITH_WINOGRAD
 } Multiply_Mode;
 
+// 填充指定行
+template<class T, class T1>
+__ALGORITHM__ void fill_row(Tensor<T>& input_tensor, Tensor<T1>& row_tensor, u32 _row_n)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() >= 1));
+    MATRIX_ASSERT_QUIT((input_tensor.get_shape()[0] > _row_n));
+
+    u32 _cols = input_tensor.get_shape()[1].touint32();
+    for(int i = 0; i < _cols; i++) {
+        input_tensor.iloc(_row_n, i) = row_tensor.at(i);
+    }
+}
 
 // algorithms about matrix
 // 矩阵转置
@@ -67,6 +80,62 @@ __ALGORITHM__ Bool lu_directly_split_transform(const Tensor<T>& input_tensor,
                                            Tensor<T>& l_tensor,
                                            Tensor<T>& u_tensor);
 
+// 线性方程组求解: 严格行对角占优矩阵
+template<class T>
+__ALGORITHM__ Bool to_strict_diagonal_dominance_matrix(const Tensor<T>& input_tensor,
+                                                       Tensor<T>& output_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((input_tensor.get_shape()[0] == input_tensor.get_shape()[1]));
+
+    u8 _rows = input_tensor.get_shape()[0].touint8();
+    u8 _cols = input_tensor.get_shape()[1].touint8();
+    Tensor<T> _records_do_rows(_rows);
+    _records_do_rows.zeros();
+    output_tensor.zeros(); // init matrix
+    for(int i = 0; i < _rows; i++) {
+        auto _origin_row_tensor = get_row(input_tensor, i);
+        auto _row_tensor = UTILS::matrix_abs(_origin_row_tensor);
+        u32 _max_index = UTILS::argmax_1d(_row_tensor);
+        T _other_sum = UTILS::matrix_sum(_row_tensor) - _row_tensor.at(_max_index);
+        if(_row_tensor.at(_max_index) <= _other_sum) {
+            MATRIX_WARNING_NO_PARAMS("The input_tensor can't transform to strict diagonal dominance matrix.");
+            return false;
+        }
+        fill_row(output_tensor, _origin_row_tensor, _max_index);
+        _records_do_rows.iloc(_max_index) = 1;
+    }
+    if(UTILS::matrix_sum(_records_do_rows) < _rows) {
+        MATRIX_WARNING_NO_PARAMS("The input_tensor can't transform to strict diagonal dominance matrix.");
+        return false;
+    }
+    return true;
+} 
+
+// 线性方程组求解: Jacobi迭代矩阵分解
+template<class T>
+__ALGORITHM__ void jacobi_iterator_matrix_split(const Tensor<T>& input_tensor,
+                                                Tensor<T>& d_tensor,
+                                                Tensor<T>& l_tensor,
+                                                Tensor<T>& u_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() == 2));
+
+    u8 _rows = input_tensor.get_shape()[0].touint8();
+    u8 _cols = input_tensor.get_shape()[1].touint8();
+    d_tensor.zeros(); // init matrix
+    l_tensor.zeros();
+    u_tensor.zeros();
+    for(int i = 0; i < _rows; i++) {
+        for(int j =0; j < _cols; j++) {
+            if(i == j) d_tensor.iloc(i, j) = input_tensor.at(i, j);
+            else if(i > j) l_tensor.iloc(i, j) = input_tensor.at(i, j);
+            else u_tensor.iloc(i, j) = input_tensor.at(i, j);
+        }
+    }
+}
 
 
 
