@@ -281,7 +281,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator--
 #define DEFINE_TYPE Float64
 #define DEFINE_SUBTYPE float64
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -293,7 +293,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -305,7 +305,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -317,7 +317,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -373,7 +373,7 @@ __NORMAL__ __TEMPLATE_IMPL__ void Tensor<DEFINE_TYPE>::operator/=(const DEFINE_S
 #define DEFINE_TYPE Float64
 #define DEFINE_SUBTYPE Float64
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -385,7 +385,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -397,7 +397,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -409,7 +409,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const DEFINE_SUBTYPE value)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const DEFINE_SUBTYPE value) const
 {
     CLASS_ASSERT_QUIT(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n", _name);
@@ -472,7 +472,7 @@ __NORMAL__ __TEMPLATE_IMPL__ void Tensor<DEFINE_TYPE>::operator/=(const DEFINE_S
 
 #define DEFINE_TYPE Float64
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const Tensor<DEFINE_TYPE>& tensor)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(const Tensor<DEFINE_TYPE>& tensor) const
 {
     assert(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n");
@@ -486,7 +486,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator+(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const Tensor<DEFINE_TYPE>& tensor)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(const Tensor<DEFINE_TYPE>& tensor) const
 {
     assert(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n");
@@ -500,7 +500,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator-(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const Tensor<DEFINE_TYPE>& tensor)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(const Tensor<DEFINE_TYPE>& tensor) const
 {
     assert(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n");
@@ -514,7 +514,7 @@ __NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator*(
     return _temp;
 }
 template<>
-__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const Tensor<DEFINE_TYPE>& tensor)
+__NORMAL__ __TEMPLATE_IMPL__ Tensor<DEFINE_TYPE> Tensor<DEFINE_TYPE>::operator/(const Tensor<DEFINE_TYPE>& tensor) const
 {
     assert(check_elem_number().tobool() && \
            "The Tensor's elemment number should be more than 0.\n");

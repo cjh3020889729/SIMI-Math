@@ -91,10 +91,10 @@ public:
     __NORMAL__ Tensor operator--(int); // 后缀--
 #define DEFINE_TYPE Float64
 #define DEFINE_SUBTYPE float64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value); // float32 自动升为 float64 -- 内部控制实际运算类型即可
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const; // float32 自动升为 float64 -- 内部控制实际运算类型即可
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -103,10 +103,10 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Float64
 #define DEFINE_SUBTYPE Float64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -116,10 +116,10 @@ public:
 // TODO:
 #define DEFINE_TYPE Int64
 #define DEFINE_SUBTYPE int64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value); // int8/16/32 自动升为 int64 -- 内部控制实际运算类型即可
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const; // int8/16/32 自动升为 int64 -- 内部控制实际运算类型即可
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -128,10 +128,10 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Int64
 #define DEFINE_SUBTYPE Int64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -140,10 +140,10 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Uint64
 #define DEFINE_SUBTYPE u64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value); // uint8/16/32 自动升为 uint64 -- 内部控制实际运算类型即可
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const; // uint8/16/32 自动升为 uint64 -- 内部控制实际运算类型即可
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -152,10 +152,10 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Uint64
 #define DEFINE_SUBTYPE Uint64
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -164,10 +164,10 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Bool
 #define DEFINE_SUBTYPE bool
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
@@ -176,20 +176,20 @@ public:
 #undef DEFINE_TYPE
 #define DEFINE_TYPE Bool
 #define DEFINE_SUBTYPE Bool
-    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value);
-    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value);
+    __NORMAL__ Tensor operator+(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator-(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator*(const DEFINE_SUBTYPE value) const;
+    __NORMAL__ Tensor operator/(const DEFINE_SUBTYPE value) const;
     __NORMAL__ void operator+=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator-=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator*=(const DEFINE_SUBTYPE value);
     __NORMAL__ void operator/=(const DEFINE_SUBTYPE value);
 #undef DEFINE_SUBTYPE
 #undef DEFINE_TYPE
-    __NORMAL__ Tensor operator+(const Tensor& tensor);
-    __NORMAL__ Tensor operator-(const Tensor& tensor);
-    __NORMAL__ Tensor operator*(const Tensor& tensor);
-    __NORMAL__ Tensor operator/(const Tensor& tensor);
+    __NORMAL__ Tensor operator+(const Tensor& tensor) const;
+    __NORMAL__ Tensor operator-(const Tensor& tensor) const;
+    __NORMAL__ Tensor operator*(const Tensor& tensor) const;
+    __NORMAL__ Tensor operator/(const Tensor& tensor) const;
     __NORMAL__ void operator+=(const Tensor& tensor);
     __NORMAL__ void operator-=(const Tensor& tensor);
     __NORMAL__ void operator*=(const Tensor& tensor);
