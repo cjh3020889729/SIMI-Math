@@ -71,9 +71,9 @@ __ALGORITHM__ Tensor<DEFINE_TYPE1> transpose(const Tensor<DEFINE_TYPE1>& tensor)
                 "The Multiply only support the ndims == 2 for Tensor*Tensor.");
 
     Tensor<DEFINE_TYPE1> _temp(tensor.get_shape()[1].touint32(), tensor.get_shape()[0].touint32());
-    for(int i = 0; tensor.get_shape()[0] > i; i++) {
+    for(int i = 0; tensor.get_shape()[1] > i; i++) {
         for(int j = 0; tensor.get_shape()[0] > j; j++) {
-            if(i == j) continue; // 对角不动
+            if(i == j) _temp.iloc(i, i) = tensor.at(i, i); // 对角不动
             _temp.iloc(i, j) = tensor.at(j, i);
         }
     }

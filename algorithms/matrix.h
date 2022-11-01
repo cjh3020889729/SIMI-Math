@@ -21,6 +21,7 @@ __DATA__ typedef enum {
     COPPERSMITH_WINOGRAD
 } Multiply_Mode;
 
+
 // 矩阵对应元素相减
 template<class T>
 __ALGORITHM__ Tensor<T> sub(const Tensor<T>& input_tensor1, const Tensor<T>& input_tensor2)
@@ -297,6 +298,125 @@ __ALGORITHM__ void jacobi_iterator_matrix_split(const Tensor<T>& input_tensor,
             else u_tensor.iloc(i, j) = input_tensor.at(i, j);
         }
     }
+}
+
+
+// check is symmetric matrix
+template<class T>
+bool is_symmetric_matrix(const Tensor<T>& input_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((input_tensor.get_shape()[0] == input_tensor.get_shape()[1]));
+
+    u32 _rows = input_tensor.get_shape()[0].touint8();
+    u32 _cols = input_tensor.get_shape()[1].touint8();
+    Tensor<T> _temp(input_tensor);
+    _temp = transpose(_temp);
+    for(int i = 0; i < _rows; i++) {
+        for(int j =0; j < _cols; j++) {
+            if(input_tensor.at(i, j) != _temp.at(i, j)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// check is positive definite matrix
+template<class T>
+bool is_positive_definite_matrix(const Tensor<T>& input_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((input_tensor.get_shape()[0] == input_tensor.get_shape()[1]));
+
+    u32 _rows = input_tensor.get_shape()[0].touint8();
+    u32 _cols = input_tensor.get_shape()[1].touint8();
+    Tensor<T> _x(1, _rows);
+    _x.zeros(); _x.iloc(0, 0) = 1; // [1, 0, 0, ..., 0]
+    Tensor<T> _xta = multiply(_x, input_tensor);
+    _x = transpose(_x); // _rows, 1
+    Tensor<T> _xtax = multiply(_xta, _x);
+    if(CHECK_ZERO(_xtax.at(0, 0).tofloat64())) return false;
+    return true;
+}
+
+
+// cholesky split
+template<class T>
+bool cholesky_split(const Tensor<T>& input_tensor, Tensor<T>& l_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((input_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((input_tensor.get_shape()[0] == input_tensor.get_shape()[1]));
+
+    if(!is_symmetric_matrix(input_tensor)) {
+        std::cout << "cholesky_split: failed to check symmetric_matrix.\n";
+        return false;
+    }
+    if(!is_positive_definite_matrix(input_tensor)) {
+        std::cout << "cholesky_split: failed to check symmetric_matrix.\n";
+        return false;
+    }
+    u32 _rows = input_tensor.get_shape()[0].touint8();
+    u32 _cols = input_tensor.get_shape()[1].touint8();
+    l_tensor.zeros();
+    for(int i = 0; i < _cols; i++) {
+        for(int j = i; j < _rows; j++) {
+            T _temp = input_tensor.at(j, i);
+            for(int k = 0; k < i; k++) {
+                if( i == j ) {
+                    _temp = _temp - l_tensor.at(i, k) * l_tensor.at(i, k);
+                }
+                else {
+                    _temp = _temp - input_tensor.at(j, k) * l_tensor.at(i, k);
+                }
+            }
+            if( i == j ) {
+                l_tensor.iloc(j, i) = sqrt(_temp.tofloat64());
+            }
+            else {
+                l_tensor.iloc(j, i) = _temp / l_tensor.at(i, i);
+            }
+        }
+    }
+    return true;
+}
+
+
+// 无穷范数
+template<class T>
+T infinite_norm_for_vector(const Tensor<T>& input_tensor)
+{
+    T _max_value = 1e-15;
+    u32 _rows = input_tensor.get_shape()[0].touint32();
+    u32 _cols = input_tensor.get_shape()[1].touint32();
+    for(int i = 0; i < _rows; i++) {
+        for(int j = 0; j < _cols; j++) {
+            if(fabs(input_tensor.at(i, j).tofloat64()) > _max_value.tofloat64()) {
+                _max_value = fabs(input_tensor.at(i, j).tofloat64());
+            }
+        }
+    }
+    return _max_value;
+}
+
+// L2范数
+template<class T>
+T l2_norm_for_vector(const Tensor<T>& input_tensor)
+{
+    T _max_value = 1e-15;
+    u32 _rows = input_tensor.get_shape()[0].touint32();
+    u32 _cols = input_tensor.get_shape()[1].touint32();
+    // for(int i = 0; i < _rows; i++) {
+    //     for(int j = 0; j < _cols; j++) {
+    //         if(fabs(input_tensor.at(i, j).tofloat64()) > _max_value) {
+    //             _max_value = fabs(input_tensor.at(i, j).tofloat64());
+    //         }
+    //     }
+    // }
+    return _max_value;
 }
 
 

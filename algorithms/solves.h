@@ -330,6 +330,122 @@ void sor_iterate_solve(const Tensor<T>& d_tensor,
     }
 }
 
+// cholesky solve
+template<class T>
+void cholesky_split_solve(const Tensor<T>& l_tensor,
+                          const Tensor<T>& b_tensor,
+                          Tensor<T>& x)
+{
+    UTILS_ASSERT_QUIT(l_tensor.check_elem_number().tobool());
+    UTILS_ASSERT_QUIT(l_tensor.ndims()==2);
+    UTILS_ASSERT_QUIT(l_tensor.get_shape()[0] == l_tensor.get_shape()[1]);
+    UTILS_ASSERT_QUIT(x.check_elem_number().tobool());
+    UTILS_ASSERT_QUIT(x.ndims()==2);
+    UTILS_ASSERT_QUIT(x.get_shape()[0] == l_tensor.get_shape()[1] && x.get_shape()[0] == 1);
+    
+    u32 _col_num = l_tensor.get_shape()[0].touint32();
+    u32 _row_num = l_tensor.get_shape()[1].touint32();
+    Tensor<T> _y(x);
+    Tensor<T> lt_tensor(MATRIX::transpose(l_tensor));
+    _y.zeros();
+    // solve y
+    for(int i = 0; i < _col_num; i++) {
+        T _sum = 0;
+        for(int j = 0; j <= i; j++) {
+            if(j == i) { // i == j: 对应方程未知元素(每一次求解只含有一个未知数)
+                _y.iloc(j, 0) = (b_tensor.at(i, 0) - _sum) / l_tensor.at(i, j);
+            } else {
+                _sum = _sum + _y.iloc(j, 0) * l_tensor.at(i, j);
+            }
+        }
+    }
+
+    // from y to x: Ux=y : backward solve
+    for(int i = _col_num-1; i >= 0; i--) {
+        T _sum = 0;
+        for(int j = _col_num-1; j >= i; j--) {
+            if(j == i) {
+                x.iloc(j, 0) = (_y.at(i, 0) - _sum) / lt_tensor.at(i, j);
+            } else {
+                _sum = _sum + x.iloc(j, 0) * lt_tensor.at(i, j);
+            }
+        }
+    }
+
+}
+
+
+// gradient_descent_solve
+template<class T>
+void gradient_descent_solve(const Tensor<T>& a,
+                            const Tensor<T>& b,
+                            Tensor<T>& x,
+                            u32 iter_max=50,
+                            float64 error_limit=1e-7)
+{
+    MATRIX_ASSERT_QUIT(a.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a.get_shape()[0] == a.get_shape()[1]));
+    UTILS_ASSERT_QUIT(x.check_elem_number().tobool());
+    UTILS_ASSERT_QUIT(x.ndims()==2);
+    UTILS_ASSERT_QUIT(x.get_shape()[0] == a.get_shape()[1] && x.get_shape()[0] == 1);
+
+    Tensor<T> v = MATRIX::sub( b, MATRIX::multiply(a, x) );
+    Tensor<T> w;
+    T t;
+    for(int i = 0; i < iter_max; i++) {
+        w = MATRIX::multiply(a, v);
+        t = MATRIX::multiply( MATRIX::transpose(v), v ).at(0, 0) / \
+            MATRIX::multiply( MATRIX::transpose(v), w ).at(0, 0);
+        x = MATRIX::add( x, v * t );
+        v = MATRIX::sub( v, w * t );
+
+        if(MATRIX::infinite_norm_for_vector(v) < error_limit) {
+            std::cout << "The solve has finished at iter-" << i << std::endl;
+            break;
+        }
+    }
+    std::cout << "The End Solve Error(|v|): " << MATRIX::infinite_norm_for_vector(v) << std::endl;
+}
+
+
+// 共轭梯度法
+template<class T>
+void conjugate_gradient_descent_solve(const Tensor<T>& a,
+                                      const Tensor<T>& b,
+                                      Tensor<T>& x)
+{
+    MATRIX_ASSERT_QUIT(a.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a.get_shape()[0] == a.get_shape()[1]));
+    UTILS_ASSERT_QUIT(x.check_elem_number().tobool());
+    UTILS_ASSERT_QUIT(x.ndims()==2);
+    UTILS_ASSERT_QUIT(x.get_shape()[0] == a.get_shape()[1] && x.get_shape()[0] == 1);
+
+    Tensor<T> v = MATRIX::sub( b, MATRIX::multiply(a, x) );
+    Tensor<T> r(v);
+    Tensor<T> w;
+    T t;
+    T s;
+    float64 error_limit = 1e-15;
+    u32 iter_max = a.get_shape()[0].touint32();
+    for(int i = 0; i < iter_max; i++) {
+        auto rr0 = MATRIX::multiply( MATRIX::transpose(r), r ).at(0, 0);
+        t = rr0 /\
+            MATRIX::multiply( MATRIX::multiply( MATRIX::transpose(v), a ), v ).at(0, 0);
+        x = MATRIX::add( x, v * t );
+        r = MATRIX::sub( r, MATRIX::multiply(a, v) * t );
+        s = MATRIX::multiply( MATRIX::transpose(r), r ).at(0, 0) / rr0;
+        v = MATRIX::add( r, v * s );
+
+        if(MATRIX::infinite_norm_for_vector(r) <= error_limit) {
+            std::cout << "The solve has finished at iter-" << i << std::endl;
+            break;
+        }
+    }
+    std::cout << "The End Solve Error(|r|): " << MATRIX::infinite_norm_for_vector(r) << std::endl;
+}
+
 
 }
 
