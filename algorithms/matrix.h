@@ -78,9 +78,29 @@ __ALGORITHM__ Tensor<T> transpose(const Tensor<T>& tensor);
 // 矩阵取列
 template<class T>
 __ALGORITHM__ Tensor<T> get_col(const Tensor<T>& tensor, u32 col);
+template<class T>
+__ALGORITHM__ Tensor<T> get_col_vector(const Tensor<T>& tensor, u32 col)
+{
+    Tensor<T> _temp(tensor.get_shape()[0].touint32(), 1);
+
+    for(int i = 0; i < tensor.get_shape()[0].toint32(); i++) {
+        _temp.iloc(i, 0) = tensor.at(i, col);
+    }
+    return _temp;
+}
 // 矩阵取行
 template<class T>
 __ALGORITHM__ Tensor<T> get_row(const Tensor<T>& tensor, u32 row);
+template<class T>
+__ALGORITHM__ Tensor<T> get_row_vector(const Tensor<T>& tensor, u32 row)
+{
+    Tensor<T> _temp(tensor.get_shape()[1].touint32(), 1);
+
+    for(int i = 0; i < tensor.get_shape()[1].toint32(); i++) {
+        _temp.iloc(i, 0) = tensor.at(row, i);
+    }
+    return _temp;
+}
 
 // 矩阵换行
 template<class T>
@@ -402,22 +422,366 @@ T infinite_norm_for_vector(const Tensor<T>& input_tensor)
     return _max_value;
 }
 
-// L2范数
+// L2范数: TODO
 template<class T>
-T l2_norm_for_vector(const Tensor<T>& input_tensor)
+T l2_norm_for_vector(const Tensor<T>& input_tensor, bool use_sqrt=true)
 {
-    T _max_value = 1e-15;
+    T _sum = 0.;
     u32 _rows = input_tensor.get_shape()[0].touint32();
     u32 _cols = input_tensor.get_shape()[1].touint32();
-    // for(int i = 0; i < _rows; i++) {
-    //     for(int j = 0; j < _cols; j++) {
-    //         if(fabs(input_tensor.at(i, j).tofloat64()) > _max_value) {
-    //             _max_value = fabs(input_tensor.at(i, j).tofloat64());
-    //         }
-    //     }
-    // }
-    return _max_value;
+    for(int i = 0; i < _rows; i++) {
+        for(int j = 0; j < _cols; j++) {
+            _sum = _sum + input_tensor.at(i, j) * input_tensor.at(i, j);
+        }
+    }
+    if(use_sqrt) _sum = sqrt(_sum.tofloat64());
+    return _sum;
 }
+
+template<class T>
+Tensor<T> vector_normalize(const Tensor<T>& input_tensor)
+{
+    MATRIX_ASSERT_QUIT(input_tensor.check_elem_number().tobool());
+
+    Tensor<T> _temp(input_tensor);
+    _temp = _temp / infinite_norm_for_vector(_temp);
+    return _temp;
+}
+
+
+// (直接法)幂法迭代求解特征值与向量: 支持情况1
+template<class T>
+u32 power_iterator_find_eigenvalue_direct(
+    const Tensor<T>& a_tensor,
+    Tensor<T>& x,
+    Tensor<T>& out_tensor,
+    u32 iter_max=10)
+{
+    MATRIX_ASSERT_QUIT(a_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a_tensor.get_shape()[0] == a_tensor.get_shape()[1]));
+
+    bool is_inverse_eigenvalue=false; // 存在相反数的特征值
+    T eigenvalue = 0.;
+    Tensor<T> init_x(x); // x vector
+    Tensor<T> y(a_tensor.get_shape()[1].touint32(), 1); // y vector
+    Tensor<T> z(a_tensor.get_shape()[1].touint32(), 1); // z vector
+
+    for(int i = 0; i < iter_max; i++) {
+        init_x = vector_normalize(init_x);
+        y = multiply(a_tensor, init_x);
+        eigenvalue = infinite_norm_for_vector(y) / infinite_norm_for_vector(init_x);
+        T e1 = infinite_norm_for_vector(y / eigenvalue - init_x);
+        y = vector_normalize(y);
+        if( i == iter_max-1 ) {
+            Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
+            result.iloc(0, 0) = eigenvalue;
+            for(int i = 1; i < (1+a_tensor.get_shape()[1].touint32()); i++) {
+                result.iloc(i, 0) = y.at(i-1, 0);
+            }
+            out_tensor = result;
+            return 1;
+        } // case 1
+
+        init_x = y;
+        std::cout << "iter:" << i+1 << ", engen value:"
+                      << eigenvalue << std::endl;
+    }
+
+    return 0;
+}
+
+// (Aitken加速法)幂法迭代求解特征值与向量: 支持情况1
+template<class T>
+u32 power_iterator_find_eigenvalue_aitken(
+    const Tensor<T>& a_tensor,
+    Tensor<T>& x,
+    Tensor<T>& out_tensor,
+    u32 iter_max=10)
+{
+    MATRIX_ASSERT_QUIT(a_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a_tensor.get_shape()[0] == a_tensor.get_shape()[1]));
+
+    bool is_inverse_eigenvalue=false; // 存在相反数的特征值
+    T eigenvalue = 0.;
+    Tensor<T> init_x(x); // x0 vector
+    Tensor<T> x1(a_tensor.get_shape()[1].touint32(), 1); // x1 vector
+    Tensor<T> x2(a_tensor.get_shape()[1].touint32(), 1); // x2 vector
+    Tensor<T> y(a_tensor.get_shape()[1].touint32(), 1); // y vector
+    // aitken加速预热
+    for(int i = 0; i < 2; i++) {
+        if(i == 0) {
+            y = vector_normalize(init_x);
+            x1 = multiply(a_tensor, y);
+            eigenvalue = infinite_norm_for_vector(y) / infinite_norm_for_vector(x1);
+        } else {
+            y = vector_normalize(x1);
+            x2 = multiply(a_tensor, y);
+            eigenvalue = infinite_norm_for_vector(y) / infinite_norm_for_vector(x2);
+        }
+        std::cout << "iter:" << i+1 << ", engen value:"
+                      << eigenvalue << std::endl;  // 预热有一次完整运算
+    }
+    for(int i = 0; i < iter_max-2; i++) {
+        T _temp_eigenvalue = eigenvalue;
+
+        y = vector_normalize(x2);
+        eigenvalue = infinite_norm_for_vector(x2) - \
+                     ((infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1)) * \
+                     (infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1))) / \
+                     (infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1)*2. + \
+                     infinite_norm_for_vector(init_x));
+        init_x = x1;
+        x1 = x2;
+        x2 = multiply(a_tensor, y);
+
+        T e1 = eigenvalue - _temp_eigenvalue;
+        if(i == (iter_max-2)-1 ) {
+            Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
+            result.iloc(0, 0) = eigenvalue;
+            for(int i = 1; i < (1+a_tensor.get_shape()[1].touint32()); i++) {
+                result.iloc(i, 0) = y.at(i-1, 0);
+            }
+            out_tensor = result;
+            return 1;
+        } // case 1
+
+        std::cout << "iter:" << i+3 << ", engen value:"
+                      << eigenvalue << std::endl;  // 预热有一次完整运算
+    }
+
+    return 0;
+}
+
+template<class T>
+static Tensor<T> _lu_solve(Tensor<T>& l_tensor, Tensor<T>& u_tensor, Tensor<T>& b_tensor)
+{
+    Tensor<T> _x(b_tensor), _y(b_tensor);
+    _x.zeros(), _y.zeros();
+    u32 _col_num = l_tensor.get_shape()[0].touint32();
+    u32 _row_num = l_tensor.get_shape()[1].touint32();
+
+    // fill y --> Ly=b : forward solve
+    for(int i = 0; i < _col_num; i++) {
+        T _sum = 0;
+        for(int j = 0; j <= i; j++) {
+            if(j == i) { // i == j: 对应方程未知元素(每一次求解只含有一个未知数)
+                _y.iloc(j, 0) = (b_tensor.at(i, 0) - _sum) / l_tensor.at(i, j);
+            } else {
+                _sum = _sum + _y.iloc(j, 0) * l_tensor.at(i, j);
+            }
+        }
+    }
+
+    //from y to x: Ux=y : backward solve
+    for(int i = _col_num-1; i >= 0; i--) {
+        T _sum = 0;
+        for(int j = _col_num-1; j >= i; j--) {
+            if(j == i) {
+                _x.iloc(j, 0) = (_y.at(i, 0) - _sum) / u_tensor.at(i, j);
+            } else {
+                _sum = _sum + _x.iloc(j, 0) * u_tensor.at(i, j);
+            }
+        }
+    }
+
+    return _x;
+}
+
+// (直接法)反幂法迭代求解特征值与向量: 支持情况1
+template<class T>
+u32 inverse_power_iterator_find_eigenvalue_direct(
+    const Tensor<T>& a_tensor,
+    Tensor<T>& init_x,
+    Tensor<T>& out_tensor,
+    u32 iter_max=10)
+{
+    MATRIX_ASSERT_QUIT(a_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a_tensor.get_shape()[0] == a_tensor.get_shape()[1]));
+
+    bool is_inverse_eigenvalue=false; // 存在相反数的特征值
+    // T eigenvalue = 0.;
+    Tensor<T> x(a_tensor.get_shape()[1].touint32(), 1); // x vector
+    Tensor<T> y(init_x); // y vector
+    Tensor<T> _temp_y(y);
+    Tensor<T> z(a_tensor.get_shape()[1].touint32(), 1); // z vector
+    Tensor<T> l(a_tensor), u(a_tensor);
+    if(!lu_directly_split_transform(a_tensor, l, u).tobool()) {
+        std::cout << "LU Split Error.\n";
+        return 0;
+    }
+    
+
+    for(int i = 0; i < iter_max; i++) {
+        _temp_y = y;
+        x = _lu_solve(l, u, y);
+        y = vector_normalize(x);
+        
+        if(i == iter_max-1) {
+            Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
+            result.iloc(0, 0) = 1. / infinite_norm_for_vector(x).tofloat64();
+            for(int i = 1; i < (1+a_tensor.get_shape()[1].touint32()); i++) {
+                result.iloc(i, 0) = y.at(i-1, 0);
+            }
+            out_tensor = result;
+            return 1;
+        }
+
+        std::cout << "iter:" << i+1 << ", engen value:"
+                      << 1. / infinite_norm_for_vector(x).tofloat64() << std::endl;  // 预热有一次完整运算
+    }
+
+    return 0;
+}
+
+// (aitken加速)反幂法迭代求解特征值与向量: 支持情况1
+template<class T>
+u32 inverse_power_iterator_find_eigenvalue_aitken(
+    const Tensor<T>& a_tensor,
+    Tensor<T>& init_x,
+    Tensor<T>& out_tensor,
+    u32 iter_max=10)
+{
+    MATRIX_ASSERT_QUIT(a_tensor.check_elem_number().tobool());
+    MATRIX_ASSERT_QUIT((a_tensor.ndims() == 2));
+    MATRIX_ASSERT_QUIT((a_tensor.get_shape()[0] == a_tensor.get_shape()[1]));
+
+    bool is_inverse_eigenvalue=false; // 存在相反数的特征值
+    T eigenvalue = 0.;
+    Tensor<T> x(a_tensor.get_shape()[1].touint32(), 1); // x vector
+    Tensor<T> x1(x);
+    Tensor<T> x2(x);
+    Tensor<T> y(init_x); // y vector
+    Tensor<T> _temp_y(y);
+    Tensor<T> z(a_tensor.get_shape()[1].touint32(), 1); // z vector
+    Tensor<T> l(a_tensor), u(a_tensor);
+    if(!lu_directly_split_transform(a_tensor, l, u).tobool()) {
+        std::cout << "LU Split Error.\n";
+        return 0;
+    }
+    
+
+    for(int i = 0; i < iter_max; i++) {
+        _temp_y = y;
+
+        x = x1;
+        x1 = x2;
+        x2 = _lu_solve(l, u, y);
+        y = vector_normalize(x2);
+        
+        if(i >= 2) { // aitken 加速
+            T _temp_eigenvalue = 1. / eigenvalue.tofloat64();
+            eigenvalue = infinite_norm_for_vector(x2) - \
+                        ((infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1)) * \
+                        (infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1))) / \
+                        (infinite_norm_for_vector(x2) - infinite_norm_for_vector(x1)*2. + \
+                        infinite_norm_for_vector(init_x));
+            eigenvalue = 1. / eigenvalue.tofloat64();
+            
+            if(i == iter_max-1) {
+                Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
+                result.iloc(0, 0) = eigenvalue;
+                for(int i = 1; i < (1+a_tensor.get_shape()[1].touint32()); i++) {
+                    result.iloc(i, 0) = y.at(i-1, 0);
+                }
+                out_tensor = result;
+                return 1;
+            }
+
+            std::cout << "iter:" << i+1 << ", engen value:"
+                      << eigenvalue << std::endl;
+        } else {
+            if(i == iter_max-1) {
+                Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
+                result.iloc(0, 0) = 1. / infinite_norm_for_vector(x2).tofloat64();
+                for(int i = 1; i < (1+a_tensor.get_shape()[1].touint32()); i++) {
+                    result.iloc(i, 0) = y.at(i-1, 0);
+                }
+                out_tensor = result;
+                return 1;
+            }
+
+            std::cout << "iter:" << i+1 << ", engen value:"
+                      << 1. / infinite_norm_for_vector(x2).tofloat64() << std::endl;
+        }
+    }
+
+    return 0;
+}
+
+
+// 生成单位阵
+template<class T>
+Tensor<T> create_E_matrix(u32 size)
+{
+    Tensor<T> _temp(size, size);
+    for(int i = 0; i < size; i++) {
+        for(int j = 0; j < size; j++) {
+            if( i == j) _temp.iloc(i, j) = 1.;
+        }
+    }
+    return _temp;
+}
+
+
+// 符号函数
+template<class T>
+int32 sign(const T& input)
+{
+    if(fabs(input.tofloat64()) < 1e-15) return 0;
+    else if(input.tofloat64() > 1e-15) return 1;
+    return -1;
+}
+
+// Householder变换
+template<class T>
+Tensor<T> householder_transform(
+          const Tensor<T>& input_tensor,
+          Tensor<T>& r_tensor)
+{
+    Tensor<T> _temp(input_tensor);
+    Tensor<T> q = create_E_matrix<T>(input_tensor.get_shape()[0].touint32());
+    Tensor<T> w, v, h, _h_right;
+    u32 _rows = input_tensor.get_shape()[0].touint32();
+    u32 _cols = input_tensor.get_shape()[1].touint32();
+
+    for(int i = 0; i < _cols; i++) {
+        Tensor<T> e1(_rows-i, 1);
+        e1.iloc(0, 0) = 1.;
+        T _norm = 0.;
+        for(int j = i; j < _rows; j++) {
+            // l2 norm
+            _norm = _norm + _temp.at(j, i)*_temp.at(j, i);
+        }
+        _norm = sqrt(_norm.tofloat64());
+        if(fabs(_norm.tofloat64()) < 1e-15) continue;
+
+        _norm = _norm * sign(_temp.at(i, i)) * -1.; // r
+        w = e1 * _norm;
+        v = w;
+        for(int j = i; j < _rows; j++) {
+            // v = w - A1
+            v.iloc(j-i, 0) = v.at(j-i, 0) - _temp.at(j, i);
+        }
+
+        _h_right = multiply(v, transpose(v)) / l2_norm_for_vector(v, false) * -2.0;
+        h = create_E_matrix<T>(input_tensor.get_shape()[0].touint32());
+        for(int k = i; k < _rows; k++) {
+            for(int z = i; z < _rows; z++) {
+                h.iloc(k, z) = h.at(k, z) + _h_right.at(k-i, z-i); 
+            }
+        }
+
+        _temp = multiply(h, _temp);
+        q = multiply(q, h);
+    }
+
+    r_tensor = _temp;
+    return q;
+}
+
 
 
 

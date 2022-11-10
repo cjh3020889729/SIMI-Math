@@ -26,7 +26,7 @@ Tensor<DEFINE_TYPE> gaussian_elimination_solve(Tensor<DEFINE_TYPE>& tensor)
 }
 
 
-
+/*
 template<>
 Tensor<DEFINE_TYPE> lu_solve(Tensor<DEFINE_TYPE>& l_tensor, Tensor<DEFINE_TYPE>& u_tensor, Tensor<DEFINE_TYPE>& b_tensor)
 {
@@ -61,6 +61,7 @@ Tensor<DEFINE_TYPE> lu_solve(Tensor<DEFINE_TYPE>& l_tensor, Tensor<DEFINE_TYPE>&
 
     return _x;
 }
+*/
 
 #undef DEFINE_TYPE
 

@@ -21,7 +21,39 @@ Tensor<T> gaussian_elimination_solve(Tensor<T>& tensor);
 
 // LU分解求解线性方程组
 template<class T>
-Tensor<T> lu_solve(Tensor<T>& l_tensor, Tensor<T>& u_tensor, Tensor<T>& b_tensor);
+Tensor<T> lu_solve(Tensor<T>& l_tensor, Tensor<T>& u_tensor, Tensor<T>& b_tensor)
+{
+    Tensor<T> _x(b_tensor), _y(b_tensor);
+    _x.zeros(), _y.zeros();
+    u32 _col_num = l_tensor.get_shape()[0].touint32();
+    u32 _row_num = l_tensor.get_shape()[1].touint32();
+
+    // fill y --> Ly=b : forward solve
+    for(int i = 0; i < _col_num; i++) {
+        T _sum = 0;
+        for(int j = 0; j <= i; j++) {
+            if(j == i) { // i == j: 对应方程未知元素(每一次求解只含有一个未知数)
+                _y.iloc(j, 0) = (b_tensor.at(i, 0) - _sum) / l_tensor.at(i, j);
+            } else {
+                _sum = _sum + _y.iloc(j, 0) * l_tensor.at(i, j);
+            }
+        }
+    }
+
+    // from y to x: Ux=y : backward solve
+    for(int i = _col_num-1; i >= 0; i--) {
+        T _sum = 0;
+        for(int j = _col_num-1; j >= i; j--) {
+            if(j == i) {
+                _x.iloc(j, 0) = (_y.at(i, 0) - _sum) / u_tensor.at(i, j);
+            } else {
+                _sum = _sum + _x.iloc(j, 0) * u_tensor.at(i, j);
+            }
+        }
+    }
+
+    return _x;
+}
 
 // Jacobi迭代求线性方程组: 逆矩阵转换求解(非回代求解)
 template<class T>
@@ -444,6 +476,72 @@ void conjugate_gradient_descent_solve(const Tensor<T>& a,
         }
     }
     std::cout << "The End Solve Error(|r|): " << MATRIX::infinite_norm_for_vector(r) << std::endl;
+}
+
+
+// 幂法迭代结果解析
+template<class T>
+bool power_iterator_result_solve(const Tensor<T>& input_tensor,
+                                 u32 enginevalue_count,
+                                 Tensor<T>& engine_values,
+                                 Tensor<T>& engine_vectors)
+{
+    switch (enginevalue_count)
+    {
+    case 1:
+        engine_values = Tensor<T>(1, 1);
+        engine_vectors = Tensor<T>(input_tensor.get_shape()[0].touint32()-1, 1);
+        engine_values.iloc(0, 0) = input_tensor.at(0, 0);
+        for(int i = 1; i < input_tensor.get_shape()[0].touint32(); i++) {
+            engine_vectors.iloc(i-1, 0) = input_tensor.at(i, 0);
+        }
+        return true;
+    case 2:
+        engine_values = Tensor<T>(1, 2);
+        engine_vectors = Tensor<T>(input_tensor.get_shape()[0].touint32()-1, 2);
+        engine_values.iloc(0, 0) = input_tensor.at(0, 0);
+        for(int i = 1; i < input_tensor.get_shape()[0].touint32() / 2; i++) {
+            engine_vectors.iloc(i-1, 0) = input_tensor.at(i, 0);
+        }
+        engine_values.iloc(0, 1) = input_tensor.at(input_tensor.get_shape()[0].touint32() / 2, 0);
+        for(int i = 1; i < input_tensor.get_shape()[0].touint32() / 2; i++) {
+            engine_vectors.iloc(i-1, 1) = input_tensor.at(i+input_tensor.get_shape()[0].touint32() / 2, 0);
+        }
+        return true;
+    }
+    return false;
+}
+
+
+// 反幂法迭代结果解析
+template<class T>
+bool inverse_power_iterator_result_solve(const Tensor<T>& input_tensor,
+                                 u32 enginevalue_count,
+                                 Tensor<T>& engine_values,
+                                 Tensor<T>& engine_vectors)
+{
+    return power_iterator_result_solve(
+           input_tensor, enginevalue_count,
+           engine_values, engine_vectors);
+}
+
+
+// QR求特征值
+template<class T>
+Tensor<T> QR_solve(const Tensor<T>& input_tensor,
+              u32 iter_max,
+              Tensor<T>& output_tensor)
+{
+    Tensor<T> _temp(input_tensor);
+    Tensor<T> _r, _q;
+
+    for(int i = 0; i < iter_max; i++) {
+        _q = MATRIX::householder_transform(_temp, _r);
+        _temp = MATRIX::multiply(_r, _q);
+    }
+
+    output_tensor = _r;
+    return _q;
 }
 
 

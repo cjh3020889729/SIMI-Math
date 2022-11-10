@@ -42,5 +42,6 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "python.pythonPath": "E:\\Anaconda\\envs\\paddle_env\\python.exe"
 }
