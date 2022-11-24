@@ -463,15 +463,16 @@ u32 power_iterator_find_eigenvalue_direct(
 
     bool is_inverse_eigenvalue=false; // 存在相反数的特征值
     T eigenvalue = 0.;
+    T eigenvalue_abs = 0.;
     Tensor<T> init_x(x); // x vector
     Tensor<T> y(a_tensor.get_shape()[1].touint32(), 1); // y vector
     Tensor<T> z(a_tensor.get_shape()[1].touint32(), 1); // z vector
+    T _y_max, _x_max;
 
     for(int i = 0; i < iter_max; i++) {
         init_x = vector_normalize(init_x);
         y = multiply(a_tensor, init_x);
         eigenvalue = infinite_norm_for_vector(y) / infinite_norm_for_vector(init_x);
-        T e1 = infinite_norm_for_vector(y / eigenvalue - init_x);
         y = vector_normalize(y);
         if( i == iter_max-1 ) {
             Tensor<T> result(1+a_tensor.get_shape()[1].touint32(), 1); // 特征值+特征向量元素
