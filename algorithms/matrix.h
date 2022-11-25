@@ -784,7 +784,122 @@ Tensor<T> householder_transform(
 }
 
 
+// 牛顿插值函数系数求解
+template<class T>
+bool newton_interpolation_coefficient(
+    const Tensor<T>& xy, // x, y
+    Tensor<T>& ax) // a, x
+{
+    u32 n = xy.get_shape()[0].touint32();
+    ax = xy.clone();
 
+    for(int i = 0; i < n; i++) {
+        ax.iloc(i, 0) = xy.at(i, 1); // ai = yi
+        ax.iloc(i, 1) = xy.at(i, 0); // xi = xi
+    }
+
+    for(int i = 1; i < n; i++) { // col
+        for(int j = 0; j < n-i; j++) { // row
+            ax.iloc(j, 0) = (ax.at(j+1, 0) - ax.at(j, 0)) / (ax.at(j+i, 1) - ax.at(j, 1));
+        }
+    }
+    return true;
+}
+
+
+// 三次自然样条插值系数求解
+template<class T>
+bool three_nature_interpolation_coefficient_matrix(
+    const Tensor<T>& xy, // x, y
+    Tensor<T>& ab,
+    Tensor<T>& out_o,
+    Tensor<T>& out_delta)
+{
+    u32 point_num = xy.get_shape()[0].touint32();
+
+    Tensor<T> o(point_num-1, 1); // δ
+    Tensor<T> delta(point_num-1, 1); // Δ
+    for(int i = 0; i < point_num-1; i++) {
+        o.iloc(i) = xy.at(i+1, 0) - xy.at(i, 0);
+        delta.iloc(i) = xy.at(i+1, 1) - xy.at(i, 1);
+    }
+
+    // Tensor<T> M(point_num, point_num); // M
+    // Tensor<T> belta(point_num, 1); // β
+    // for(int i = 1; i < point_num-1; i++) { // init M and β
+    //     u32 o_i = i - 1;
+    //     M.iloc(i, o_i) = o.iloc(o_i);
+    //     M.iloc(i, o_i+1) = (o.iloc(o_i) + o.iloc(o_i+1)) * 2.;
+    //     M.iloc(i, o_i+2) = o.iloc(o_i+1);
+
+    //     belta.iloc(i) = (delta.at(o_i+1)/o.at(o_i+1) - delta.at(o_i)/o.at(o_i)) * 3.;
+    // }
+    // M.iloc(0, 0) = 1; M.iloc(point_num-1, point_num-1) = 1;
+    // belta.iloc(0) = 0; belta.iloc(point_num-1) = 0;
+
+    Tensor<T> M_belta(point_num, point_num+1); // M+β
+    for(int i = 1; i < point_num-1; i++) { // init M and β
+        u32 o_i = i - 1;
+        M_belta.iloc(i, o_i) = o.iloc(o_i);
+        M_belta.iloc(i, o_i+1) = (o.iloc(o_i) + o.iloc(o_i+1)) * 2.;
+        M_belta.iloc(i, o_i+2) = o.iloc(o_i+1);
+
+        M_belta.iloc(i, point_num) = (delta.at(o_i+1)/o.at(o_i+1) - delta.at(o_i)/o.at(o_i)) * 3.;
+    }
+    M_belta.iloc(0, 0) = 1; M_belta.iloc(point_num-1, point_num-1) = 1;
+    M_belta.iloc(0, point_num) = 0; M_belta.iloc(point_num-1, point_num) = 0;
+
+    ab = gaussian_elimination_transform(M_belta);
+    out_o = o;
+    out_delta = delta;
+
+    return true;
+}
+
+
+
+
+
+
+// 均匀插值点生成
+template<class T>
+__DATA__ Tensor<T> mean_interpolate_point_generate(
+    float64 start_, // 采样左闭区间
+    float64 end_, // 采样右闭区间
+    u32 n) // 采样个数
+{
+    Tensor<T> _tmep(n, 1);
+    _tmep.iloc(0) = start_;
+
+    float64 _d = 0;
+    if(n >= 1) {
+        --n;
+        _d = (end_ - start_) / (float64)n; // 间隔
+    }
+    for(int i = 1; i <= n; i++) {
+        _tmep.iloc(i) = _tmep.iloc(i-1) + _d;
+    }
+    return _tmep;
+}
+
+// Chebyshev 插值点生成
+template<class T>
+__DATA__ Tensor<T> chebyshev_interpolate_point_generate(
+    float64 start_, // 采样左闭区间
+    float64 end_, // 采样右闭区间
+    u32 n) // 采样阶数
+{
+    const float64 PI = 3.141592653589793238462643383279502884;
+
+    Tensor<T> _tmep(n, 1);
+    float64 _left = (end_ - start_) / 2.;
+    float64 _right = (end_ + start_) / 2.;
+
+    for(int i = 0; i < n; i++) {
+        _tmep.iloc(i) = _left * cos(((2*i + 1)*PI) / (2*n)) + _right;
+    }
+    return _tmep;
+}
 
 // generate data about matrix
 template<class T>

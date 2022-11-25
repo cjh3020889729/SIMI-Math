@@ -10,8 +10,8 @@ Tensor<DEFINE_TYPE> gaussian_elimination_solve(Tensor<DEFINE_TYPE>& tensor)
 {
     u32 _end_c_index = tensor.get_shape()[0].touint32();
     u32 _end_r_index = tensor.get_shape()[1].touint32();
-    SOLVES_ASSERT_QUIT(!CHECK_FLOAT64_ELEM_ZERO(tensor.at(_end_c_index-1, _end_r_index-1)) && \
-                       "The Tensor's last elemment should not equal to zero.");
+    SOLVES_ASSERT_QUIT(!CHECK_FLOAT64_ELEM_ZERO(tensor.at(_end_c_index-2, _end_r_index-2)) && \
+                       "The Ab of A Tensor's last elemment should not equal to zero.");
 
     Tensor<DEFINE_TYPE> _result(_end_c_index, 1); // 列向量
     for(int i = _end_c_index - 1; i >= 0; i--) {

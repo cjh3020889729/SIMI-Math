@@ -545,6 +545,82 @@ Tensor<T> QR_solve(const Tensor<T>& input_tensor,
 }
 
 
+// 牛顿插值函数计算
+// 牛顿插值函数系数求解
+template<class T>
+bool newton_interpolation_caculate(
+    const Tensor<T>& ax,
+    const Tensor<T>& x,
+    Tensor<T>& output)
+{
+    u64 elem_num = x.elem_num().touint64();
+    u32 n = ax.get_shape()[0].touint32();
+    output = x.clone();
+
+    for(int i = 0; i < elem_num; i++) {
+        T _temp = ax.at(0, 0);
+        for(int j = 1; j < n; j++) {
+            _temp = ax.at(j, 0) + _temp * (x.at(i) - ax.at(j, 1));
+        }
+        output.iloc(i) = _temp;
+    }
+
+    return true;
+}
+
+
+// 三次自然插值函数计算
+template<class T>
+bool three_nature_interpolation_caculate(
+    const Tensor<T>& c,
+    const Tensor<T>& o,
+    const Tensor<T>& delta,
+    const Tensor<T>& origin_xy,
+    const Tensor<T>& input_x,
+    Tensor<T>& output)
+{
+    u32 input_size = input_x.get_shape()[0].touint32();
+    u32 _size = c.get_shape()[0].touint32() - 1;
+    Tensor<T> b(_size, 1); // init
+    Tensor<T> d(_size, 1);
+    output = input_x.clone();
+
+    for(int i = 0; i < _size; i++) {
+        b.iloc(i) = delta.at(i)/o.at(i) - (o.at(i)/3.) * (c.at(i) * 2. + c.at(i+1));
+        d.iloc(i) = (c.at(i+1) - c.at(i)) / (o.at(i) * 3.);
+    } // init
+
+    for(int i = 0; i < input_size; i++) { // caculate
+        T _v = input_x.at(i);
+        for(int j = 1; j < _size+1; j++) {
+            if(_v <= origin_xy.at(j, 0)) { // input_x <= origin_x(区间上界值)
+                T _xi = origin_xy.at(j-1, 0);
+                T _yi = origin_xy.at(j-1, 1);
+                for(int k = 0; k < 4; k++) {
+                    switch (k)
+                    {
+                        case 0:
+                            output.iloc(i) = d.at(j-1) * (_v - _xi);
+                            break;
+                        case 1:
+                            output.iloc(i) = (output.at(i) + c.at(j-1)) * (_v - _xi);
+                            break;
+                        case 2:
+                            output.iloc(i) = (output.at(i) + b.at(j-1)) * (_v - _xi);
+                            break;
+                        case 3:
+                            output.iloc(i) = output.at(i) + _yi;
+                            break;
+                    }
+                }
+                break;
+            }
+        }
+    } // caculate over
+
+    return true;
+}
+
 }
 
 }

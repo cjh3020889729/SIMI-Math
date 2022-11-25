@@ -194,7 +194,7 @@ std::ostream& operator<<(std::ostream& out, const Shape& shape)
             if(i == 0 && !((shape.ndims()-1) == i)) {
                 out << shape[i] << ", ";
             } else if((shape.ndims()-1) == i) {
-                out << shape[i] << "], ndims: " << shape.ndims() << ".";
+                out << shape[i] << "], ndims: " << shape.ndims() << ".\n";
             } else {
                 out << shape[i] << ", ";
             }
